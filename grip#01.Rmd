@@ -1,0 +1,112 @@
+---
+title: "GRIP#01"
+author: "Shamie Dasgupta"
+date: "11 september 2022"
+output: html_document
+---
+
+## task1: Predicting the percentage of a student on the number of study hours (supervised ML)
+
+We are to build a regression model which will predict the percentage of a student on the number of study hours. 
+Here Scores refers to the percentage of marks obtained by the student and Hours refers to the number of hours a student studies in a day. 
+
+ Scores is the response variable or dependent variable and Hours is the explanatory variable or the independent variable. 
+
+```{r}
+rm(list=ls())
+study=read.csv("student.csv")
+attach(study)
+study
+```
+The data is retrieved from the csv file and stored in the 'study' data frame and attached.
+
+Now we perform some exploratory Data Analysis to know more about the data:
+```{r}
+#importing all the libraries required:
+library(ggplot2)
+
+```
+
+```{r}
+ggplot(study,aes(Hours))+geom_boxplot(fill='sky blue')
+ggplot(study,aes(Scores))+geom_boxplot(fill=' pink')
+```
+
+Next, we plot the scatterplot to observe the relation between the variables Scores and Hours:
+
+```{r}
+
+ggplot(study,aes(Hours,Scores))+geom_point(col=2)+
+  labs(title="Scatterplot of Scores vs Hours")
+```
+From the scatterplot we can see that the scores of a student is more or less positively correlated with the hours of study. Moreover the relation between them looks more or less linear. 
+
+Based on the observations from the scatterplot we proceed to fit a linear regression model.
+
+## The linear regression model:
+
+Now,we divide the data into two parts randomly- referring one to train data and the other to test data. We divide the data into 3:1 ratio.
+
+```{r}
+set.seed(123)
+rsam=sample(x=c('train','test'),size=nrow(study),replace=T, prob= c(0.75,0.25))
+train=study[rsam=='train',]
+test=study[rsam=='test',]
+```
+
+Now we fit a linear regression model to the train data:
+
+```{r}
+stu_lin=lm(Scores~Hours,train)
+summary(stu_lin)
+```
+
+
+With the help of R, the linear regression model has come out to be :
+
+      Scores=3.11 + 9.70Hours
+
+the coefficient of determination for the above regression model is 0.9601.
+That is, the above linear regression model explains approximately 96% of the total variation in Scores due to the number of hours of studying by a student. 
+Since the coefficient of determination is very high we can say that the fit is good.
+
+Here is the fitted model:
+```{r}
+ggplot(study,aes(Hours,Scores))+geom_point(col=2)+
+  labs(title="Scatterplot of Scores vs Hours")+
+  geom_smooth(method='lm')
+```
+
+
+Now we test this model on our test data:
+```{r}
+
+pred_lin <- predict(stu_lin,data.frame(Hours=test$Hours))
+ggplot(NULL,aes(x=test$Hours))+
+  geom_point(aes(y=test$Scores,color='red'))+
+  geom_line(aes(y=pred_lin)) +geom_point(aes(y=pred_lin,color='blue'))+
+  labs(x='hours in test data',y='scores')+
+  scale_color_discrete(name="data points",
+                         labels=c("predicted value","actual value"))
+```
+```{r}
+
+error=test$Scores-pred_lin
+r.sq=1- sum(error^2)/sum((test$Scores-mean(test$Scores))^2)
+r.sq
+```
+the coefficient of determination for the above regression model when fitted on the test data is 0.9166. 
+Since the coefficient of determination is still high for the test data we can say that the model is a good fit for prediction.
+
+
+Now we are to find the predicted score of a student who studies 9.5 hours per day. We use the regression model to find the answer:
+```{r}
+hr=9.5
+sc=stu_lin$coefficients[[1]] + stu_lin$coefficients[[2]]*hr;sc
+
+```
+That is, if a student studies 9.5 hours per day then he/she can be expected to score approximately 95.25% in the exam.
+
+With that the first task of my data science and business analytics internship is completed.
+
+
